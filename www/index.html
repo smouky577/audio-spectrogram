@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f0f12">
+  <title>Аудио спектрограма</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header id="toolbar">
+    <button id="btnMic" class="primary">Микрофон</button>
+    <label class="btn" for="fileInput" title="Отвори звук или картинка (картинката става звук)">Файл</label>
+    <input type="file" id="fileInput" accept="audio/*,video/*,image/*" hidden>
+    <button id="btnRec" class="rec" title="Запиши звука като WAV">Запис</button>
+    <button id="btnPause" disabled>Пауза</button>
+    <button id="btnSave" title="Запази спектрограмата като PNG картинка">Запази екран</button>
+    <button id="btnSettings" title="Настройки">Настройки</button>
+    <span id="status">Натисни „Микрофон“ или отвори звук или картинка</span>
+  </header>
+
+  <section id="settings" hidden>
+    <label>FFT размер
+      <select id="setFft">
+        <option value="1024">1024</option>
+        <option value="2048">2048</option>
+        <option value="4096">4096</option>
+        <option value="8192">8192</option>
+        <option value="16384">16384</option>
+      </select>
+    </label>
+    <label>Скала
+      <select id="setScale">
+        <option value="log">Логаритмична</option>
+        <option value="lin">Линейна</option>
+      </select>
+    </label>
+    <label>Макс. честота
+      <select id="setMaxFreq">
+        <option value="2000">2 kHz</option>
+        <option value="4000">4 kHz</option>
+        <option value="8000">8 kHz</option>
+        <option value="12000">12 kHz</option>
+        <option value="16000">16 kHz</option>
+        <option value="0">Максимум (Nyquist)</option>
+      </select>
+    </label>
+    <label>Цветове
+      <select id="setColormap">
+        <option value="magma">Magma</option>
+        <option value="inferno">Inferno</option>
+        <option value="viridis">Viridis</option>
+        <option value="jet">Jet</option>
+        <option value="gray">Сиво</option>
+      </select>
+    </label>
+    <label>Дължина на звука от картинка
+      <select id="setImageSeconds">
+        <option value="0">Колкото екрана</option>
+        <option value="3">3 s</option>
+        <option value="5">5 s</option>
+        <option value="10">10 s</option>
+        <option value="20">20 s</option>
+      </select>
+    </label>
+    <label><span>Скорост: <output id="outSpeed"></output></span>
+      <input type="range" id="setSpeed" min="1" max="6" step="1">
+    </label>
+    <label><span>Минимум: <output id="outMinDb"></output> dB</span>
+      <input type="range" id="setMinDb" min="-140" max="-50" step="1">
+    </label>
+    <label><span>Максимум: <output id="outMaxDb"></output> dB</span>
+      <input type="range" id="setMaxDb" min="-80" max="0" step="1">
+    </label>
+  </section>
+
+  <main>
+    <div id="wavePane"><canvas id="wave"></canvas></div>
+    <div id="specPane">
+      <canvas id="spec"></canvas>
+      <canvas id="axis"></canvas>
+      <div id="cursor" hidden><span></span></div>
+    </div>
+  </main>
+
+  <footer>
+    <span id="peak">—</span>
+    <audio id="player" controls hidden></audio>
+    <button id="btnSaveAudio" hidden title="Запази звука от картинката">Запази</button>
+    <span id="sr"></span>
+    <button id="credit" type="button">by dr baysinger</button>
+  </footer>
+
+  <dialog id="about">
+    <h2>About</h2>
+    <p>Donate to Dr. Baysinger. He promises to spend it on hookers and beer.</p>
+    <p>Дарете на Dr. Baysinger. Той обещава да ги изхарчи за курви и бело.</p>
+    <h3>Revolut</h3>
+    <button type="button" class="copy" data-copy="revolut.me/georgi09qc">revolut.me/georgi09qc</button>
+    <h3>BTC address</h3>
+    <button type="button" class="copy" data-copy="bc1qr84akpfry7sjs6759wwq722fyert9apcarpst6">bc1qr84akpfry7sjs6759wwq722fyert9apcarpst6</button>
+    <button type="button" class="copy" data-copy="bc1p6hp5q20u9t9upsjt7425wgqdrs0cr8wnnlf9atu24z92pzsnq85q62uc8e">bc1p6hp5q20u9t9upsjt7425wgqdrs0cr8wnnlf9atu24z92pzsnq85q62uc8e</button>
+    <button id="aboutOk" type="button" class="primary">OK</button>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
