@@ -1,5 +1,5 @@
 @echo off
-cd /d "%~dp0www"
-start "Spectrogram server" /min python -m http.server 8000 --bind 127.0.0.1
+cd /d "%~dp0"
+start "Spectrogram server" /min python server.py
 timeout /t 1 /nobreak >nul
 start "" http://localhost:8000/

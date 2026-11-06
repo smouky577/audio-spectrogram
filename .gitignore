@@ -11,3 +11,6 @@ android/captures/
 .cxx/
 *.apk
 *.aab
+picture/
+record/
+sound/

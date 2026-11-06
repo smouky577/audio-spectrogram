@@ -260,6 +260,21 @@ async function saveBlob(blob, name) {
     }
     return;
   }
+  // The Windows launcher stores pictures, recordings and generated sounds in project folders.
+  const savable = /\.(png|wav)$/i.test(name);
+  if (savable && (location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+    try {
+      const res = await fetch('/save', {
+        method: 'POST',
+        headers: { 'X-Filename': name },
+        body: blob,
+      });
+      if (res.ok) {
+        setStatus(`Запазено: ${await res.text()}`);
+        return;
+      }
+    } catch { /* opened without server.py: fall back to a browser download */ }
+  }
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = name;
@@ -372,6 +387,28 @@ const IMAGE_MAX_COLS = 600;
 
 let generatedAudio = null;
 
+function finishGenerated(out, rate, file) {
+  let peak = 0;
+  for (let i = 0; i < out.length; i++) peak = Math.max(peak, Math.abs(out[i]));
+  if (!peak) {
+    setStatus('Картинката е празна (няма светли части)');
+    return;
+  }
+  const gain = 0.9 / peak;
+  const fade = Math.round(rate * 0.01);
+  for (let i = 0; i < out.length; i++) {
+    let g = gain;
+    if (i < fade) g *= i / fade;
+    else if (i > out.length - fade) g *= (out.length - i) / fade;
+    out[i] *= g;
+  }
+  generatedAudio = encodeWav([out], rate);
+  const name = `${file.name.replace(/\.[^.]+$/, '')}-zvuk.wav`;
+  startFile(new File([generatedAudio], name, { type: 'audio/wav' }));
+  $('btnSaveAudio').hidden = false;
+  $('btnSaveAudio').dataset.name = name;
+}
+
 // The spectrogram scrolls `speed` CSS pixels per 1/60 s, independent of the display's refresh rate.
 const scrollPxPerSecond = () => settings.speed * dpr * 60;
 
@@ -458,26 +495,7 @@ async function imageToSound(file) {
     }
   }
 
-  let peak = 0;
-  for (let i = 0; i < n; i++) peak = Math.max(peak, Math.abs(out[i]));
-  if (!peak) {
-    setStatus('Картинката е празна (няма светли части)');
-    return;
-  }
-  const gain = 0.9 / peak;
-  const fade = Math.round(rate * 0.01);
-  for (let i = 0; i < n; i++) {
-    let g = gain;
-    if (i < fade) g *= i / fade;
-    else if (i > n - fade) g *= (n - i) / fade;
-    out[i] *= g;
-  }
-
-  generatedAudio = encodeWav([out], rate);
-  const name = `${file.name.replace(/\.[^.]+$/, '')}-zvuk.wav`;
-  startFile(new File([generatedAudio], name, { type: 'audio/wav' }));
-  $('btnSaveAudio').hidden = false;
-  $('btnSaveAudio').dataset.name = name;
+  finishGenerated(out, rate, file);
 }
 
 // ---------------------------------------------------------------
@@ -820,14 +838,8 @@ for (const btn of document.querySelectorAll('#about .copy')) {
 }
 
 $('btnSave').addEventListener('click', () => {
-  const out = document.createElement('canvas');
-  out.width = spec.width;
-  out.height = wave.height + spec.height;
-  const c = out.getContext('2d');
-  c.drawImage(wave, 0, 0);
-  c.drawImage(spec, 0, wave.height);
-  c.drawImage(axis, 0, wave.height);
-  out.toBlob((blob) => saveBlob(blob, `spectrogram-${timestamp()}.png`));
+  // Only the spectrogram itself. The waveform and the Hz labels would become extra sound.
+  spec.toBlob((blob) => saveBlob(blob, `spectrogram-${timestamp()}.png`));
 });
 
 document.addEventListener('keydown', (e) => {
