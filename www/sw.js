@@ -1,4 +1,4 @@
-const CACHE = 'spectrogram-v3';
+const CACHE = 'spectrogram-v8';
 const ASSETS = [
   './',
   'index.html',

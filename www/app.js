@@ -26,6 +26,137 @@ try {
 
 const saveSettings = () => localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
 
+const LANG_KEY = 'spectrogram.lang';
+const I18N = {
+  bg: {
+    title: 'Аудио спектрограма',
+    mic: 'Микрофон',
+    stop: 'Спри',
+    file: 'Файл',
+    fileTitle: 'Отвори звук или картинка (картинката става звук)',
+    rec: 'Запис',
+    recTitle: 'Запиши звука като WAV',
+    recStop: 'Стоп',
+    pause: 'Пауза',
+    resume: 'Продължи',
+    saveScreen: 'Запази екран',
+    saveScreenTitle: 'Запази спектрограмата като PNG картинка',
+    settings: 'Настройки',
+    hint: 'Натисни „Микрофон“ или отвори звук или картинка',
+    https: 'Микрофонът изисква HTTPS или localhost',
+    micDenied: 'Няма достъп до микрофона:',
+    playError: 'Грешка при пускане:',
+    stopped: 'Спряно',
+    noStorage: 'Няма разрешение за запис в паметта',
+    saved: 'Запазено:',
+    saveError: 'Грешка при запазване:',
+    emptyImage: 'Картинката е празна (няма светли части)',
+    converting: 'Превръщам картинката в звук…',
+    badImage: 'Не мога да отворя тази картинка',
+    recError: 'Грешка при запис:',
+    copied: 'Copied',
+    fft: 'FFT размер',
+    scale: 'Скала',
+    scaleLog: 'Логаритмична',
+    scaleLin: 'Линейна',
+    maxFreq: 'Макс. честота',
+    nyquist: 'Максимум (Nyquist)',
+    colors: 'Цветове',
+    gray: 'Сиво',
+    imageLen: 'Дължина на звука от картинка',
+    fitScreen: 'Колкото екрана',
+    speed: 'Скорост',
+    min: 'Минимум',
+    max: 'Максимум',
+    saveAudio: 'Запази',
+    saveAudioTitle: 'Запази звука от картинката',
+  },
+  en: {
+    title: 'Audio spectrogram',
+    mic: 'Microphone',
+    stop: 'Stop',
+    file: 'File',
+    fileTitle: 'Open a sound or a picture (a picture becomes sound)',
+    rec: 'Record',
+    recTitle: 'Record the sound as WAV',
+    recStop: 'Stop',
+    pause: 'Pause',
+    resume: 'Resume',
+    saveScreen: 'Save screen',
+    saveScreenTitle: 'Save the spectrogram as a PNG picture',
+    settings: 'Settings',
+    hint: 'Press Microphone or open a sound or a picture',
+    https: 'The microphone needs HTTPS or localhost',
+    micDenied: 'No microphone access:',
+    playError: 'Playback error:',
+    stopped: 'Stopped',
+    noStorage: 'No permission to save files',
+    saved: 'Saved:',
+    saveError: 'Save error:',
+    emptyImage: 'The picture is empty (no bright parts)',
+    converting: 'Turning the picture into sound…',
+    badImage: 'Cannot open this picture',
+    recError: 'Recording error:',
+    copied: 'Copied',
+    fft: 'FFT size',
+    scale: 'Scale',
+    scaleLog: 'Logarithmic',
+    scaleLin: 'Linear',
+    maxFreq: 'Max frequency',
+    nyquist: 'Maximum (Nyquist)',
+    colors: 'Colors',
+    gray: 'Gray',
+    imageLen: 'Sound length from a picture',
+    fitScreen: 'Match the screen',
+    speed: 'Speed',
+    min: 'Minimum',
+    max: 'Maximum',
+    saveAudio: 'Save',
+    saveAudioTitle: 'Save the sound from the picture',
+  },
+};
+
+let lang = localStorage.getItem(LANG_KEY) === 'en' ? 'en' : 'bg';
+const t = (key) => I18N[lang][key] || I18N.bg[key] || key;
+
+let statusKey = 'hint';
+let statusDetail = '';
+
+function renderStatus() {
+  if (!I18N[lang][statusKey]) {
+    $('status').textContent = statusDetail || statusKey;
+    return;
+  }
+  const text = t(statusKey);
+  $('status').textContent = statusDetail ? `${text} ${statusDetail}` : text;
+}
+
+function setStatus(key, detail = '') {
+  statusKey = key;
+  statusDetail = detail;
+  renderStatus();
+}
+
+function refreshControls() {
+  $('btnMic').textContent = source === 'mic' ? t('stop') : t('mic');
+  $('btnPause').textContent = paused ? t('resume') : t('pause');
+  if (recNode) updateRecLabel();
+  else $('btnRec').textContent = t('rec');
+}
+
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.title = t('title');
+  for (const el of document.querySelectorAll('[data-i18n]')) el.textContent = t(el.dataset.i18n);
+  for (const el of document.querySelectorAll('[data-i18n-title]')) el.title = t(el.dataset.i18nTitle);
+  const flag = $('btnLang');
+  const flagName = lang === 'bg' ? 'Български' : 'English';
+  flag.title = flagName;
+  flag.setAttribute('aria-label', flagName);
+  refreshControls();
+  renderStatus();
+}
+
 // ---------------------------------------------------------------
 //   Colormaps
 // ---------------------------------------------------------------
@@ -126,12 +257,12 @@ function stopSources() {
   source = null;
   $('btnSaveAudio').hidden = true;
   $('btnMic').classList.remove('active');
-  $('btnMic').textContent = 'Микрофон';
+  refreshControls();
 }
 
 async function startMic() {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    setStatus('Микрофонът изисква HTTPS или localhost');
+    setStatus('https');
     return;
   }
   ensureContext();
@@ -141,7 +272,7 @@ async function startMic() {
       audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
     });
   } catch (e) {
-    setStatus(`Няма достъп до микрофона: ${e.message || e.name}`);
+    setStatus('micDenied', e.message || e.name);
     return;
   }
   micNode = audioCtx.createMediaStreamSource(micStream);
@@ -149,8 +280,8 @@ async function startMic() {
   source = 'mic';
   player.hidden = true;
   $('btnMic').classList.add('active');
-  $('btnMic').textContent = 'Спри';
-  setStatus('Микрофон');
+  refreshControls();
+  setStatus('mic');
   start();
 }
 
@@ -165,28 +296,26 @@ function startFile(file) {
   player.src = fileUrl;
   player.hidden = false;
   player.play().catch((e) => {
-    if (e.name !== 'AbortError') setStatus(`Грешка при пускане: ${e.message}`);
+    if (e.name !== 'AbortError') setStatus('playError', e.message);
   });
   source = 'file';
-  setStatus(file.name);
+  setStatus('fileName', file.name);
   start();
 }
 
 function start() {
   paused = false;
   $('btnPause').disabled = false;
-  $('btnPause').textContent = 'Пауза';
+  refreshControls();
   keepAwake(true);
 }
 
 function togglePause() {
   if (!source) return;
   paused = !paused;
-  $('btnPause').textContent = paused ? 'Продължи' : 'Пауза';
+  refreshControls();
   keepAwake(!paused);
 }
-
-const setStatus = (text) => { $('status').textContent = text; };
 
 // Keep the screen on while recording (mostly useful on Android).
 let wakeLock = null;
@@ -211,7 +340,7 @@ function stopAll() {
   stopSources();
   $('btnPause').disabled = true;
   keepAwake(false);
-  setStatus('Спряно');
+  setStatus('stopped');
 }
 
 // ---------------------------------------------------------------
@@ -245,7 +374,7 @@ async function saveBlob(blob, name) {
     try {
       const perm = await Filesystem.requestPermissions();
       if (perm.publicStorage !== 'granted') {
-        setStatus('Няма разрешение за запис в паметта');
+        setStatus('noStorage');
         return;
       }
       await Filesystem.writeFile({
@@ -254,9 +383,9 @@ async function saveBlob(blob, name) {
         directory: 'DOCUMENTS',
         recursive: true,
       });
-      setStatus(`Запазено: Documents/${SAVE_FOLDER}/${name}`);
+      setStatus('saved', `Documents/${SAVE_FOLDER}/${name}`);
     } catch (e) {
-      setStatus(`Грешка при запазване: ${e.message}`);
+      setStatus('saveError', e.message);
     }
     return;
   }
@@ -270,7 +399,7 @@ async function saveBlob(blob, name) {
         body: blob,
       });
       if (res.ok) {
-        setStatus(`Запазено: ${await res.text()}`);
+        setStatus('saved', (await res.text()).trim());
         return;
       }
     } catch { /* opened without server.py: fall back to a browser download */ }
@@ -318,7 +447,13 @@ let recNode = null;
 let recSink = null;
 let recChunks = [];
 let recTimer = null;
+let recStarted = 0;
 let recWorkletLoaded = false;
+
+function updateRecLabel() {
+  const s = Math.floor((Date.now() - recStarted) / 1000);
+  $('btnRec').textContent = `${t('recStop')} ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
 
 async function startRecording() {
   if (!source) {
@@ -345,13 +480,9 @@ async function startRecording() {
   recNode.connect(recSink);
   recSink.connect(audioCtx.destination);
 
-  const started = Date.now();
-  const btn = $('btnRec');
-  btn.classList.add('active');
-  const tick = () => {
-    const s = Math.floor((Date.now() - started) / 1000);
-    btn.textContent = `Стоп ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-  };
+  recStarted = Date.now();
+  $('btnRec').classList.add('active');
+  const tick = () => updateRecLabel();
   tick();
   recTimer = setInterval(tick, 500);
 }
@@ -366,7 +497,7 @@ function stopRecording() {
   recNode = null;
   recSink = null;
   $('btnRec').classList.remove('active');
-  $('btnRec').textContent = 'Запис';
+  refreshControls();
 
   // Give the worklet a moment to send its last buffered samples.
   setTimeout(() => {
@@ -391,7 +522,7 @@ function finishGenerated(out, rate, file) {
   let peak = 0;
   for (let i = 0; i < out.length; i++) peak = Math.max(peak, Math.abs(out[i]));
   if (!peak) {
-    setStatus('Картинката е празна (няма светли части)');
+    setStatus('emptyImage');
     return;
   }
   const gain = 0.9 / peak;
@@ -415,14 +546,14 @@ const scrollPxPerSecond = () => settings.speed * dpr * 60;
 const visibleSeconds = () => spec.width / scrollPxPerSecond();
 
 async function imageToSound(file) {
-  setStatus('Превръщам картинката в звук…');
+  setStatus('converting');
   await new Promise((r) => setTimeout(r, 30));
 
   let bitmap;
   try {
     bitmap = await createImageBitmap(file);
   } catch {
-    setStatus('Не мога да отворя тази картинка');
+    setStatus('badImage');
     return;
   }
 
@@ -803,7 +934,7 @@ $('fileInput').addEventListener('change', (e) => {
 
 $('btnRec').addEventListener('click', () => {
   if (recNode) stopRecording();
-  else startRecording().catch((e) => setStatus(`Грешка при запис: ${e.message}`));
+  else startRecording().catch((e) => setStatus('recError', e.message));
 });
 
 $('btnSaveAudio').addEventListener('click', () => {
@@ -813,6 +944,12 @@ $('btnSaveAudio').addEventListener('click', () => {
 $('btnPause').addEventListener('click', togglePause);
 $('btnSettings').addEventListener('click', () => {
   $('settings').hidden = !$('settings').hidden;
+});
+
+$('btnLang').addEventListener('click', () => {
+  lang = lang === 'bg' ? 'en' : 'bg';
+  localStorage.setItem(LANG_KEY, lang);
+  applyLang();
 });
 
 $('credit').addEventListener('click', () => $('about').showModal());
@@ -833,7 +970,7 @@ for (const btn of document.querySelectorAll('#about .copy')) {
       document.execCommand('copy');
       t.remove();
     }
-    setStatus('Copied');
+    setStatus('copied');
   });
 }
 
@@ -897,6 +1034,7 @@ for (const [key, id] of Object.entries(CONTROLS)) {
   });
 }
 updateOutputs();
+applyLang();
 
 // ---------------------------------------------------------------
 //   Start

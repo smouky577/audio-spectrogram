@@ -2,7 +2,12 @@
 
 Спектрограма в реално време от микрофон, от звуков файл или от картинка. Картинката се превръща в звук и се вижда върху спектрограмата.
 
-Има версия за телефон и версия за Windows. Текущата версия е **1.1**.
+Има версия за телефон и версия за Windows. Текущата версия е **1.2**.
+
+## Какво е новото в 1.2
+
+- Езикът се сменя с едно флагче непосредствено преди **by Dr. Baysinger**. Натискането го сменя с другото: българско или британско.
+- При изправен телефон лентата за възпроизвеждане е на цялата ширина. Плей бутонът е триъгълник, а менюто за скорост остава на екрана.
 
 ## Какво е новото в 1.1
 
@@ -12,13 +17,13 @@
 
 ## Телефон
 
-Свали **Spectrogram.apk** от [Releases](https://github.com/smouky577/audio-spectrogram/releases/tag/v1.1) и го инсталирай. Ако Android попита, разреши инсталация от този файл.
+Свали **Spectrogram.apk** от [Releases](https://github.com/smouky577/audio-spectrogram/releases/tag/v1.2) и го инсталирай. Ако Android попита, разреши инсталация от този файл.
 
 Кодът за телефона е в папката `android`. Записите, звуците от картинки и снимките на екрана се пазят в `Documents/Spectrogram` на телефона.
 
 ## Windows
 
-Вземи папката на проекта и цъкни два пъти върху `start.bat`. Той пуска локален адрес и отваря браузъра. Нужен е Python.
+Вземи папката на проекта и цъкни два пъти върху `Audio spectrogram.bat`. Той пуска локален адрес и отваря браузъра. Нужен е Python.
 
 Файловете на програмата са в папката `www`.
 
@@ -28,7 +33,12 @@
 
 A live spectrogram from the microphone, an audio file, or a picture. A picture is turned into sound and shows up on the spectrogram.
 
-There is a phone app and a Windows app. The current version is **1.1**.
+There is a phone app and a Windows app. The current version is **1.2**.
+
+## What is new in 1.2
+
+- The language switches with one flag placed immediately before **by Dr. Baysinger**. A tap swaps it for the other flag: Bulgarian or British.
+- On an upright phone the playback bar uses the full width. The play button is a triangle, and the speed menu stays on the screen.
 
 ## What is new in 1.1
 
@@ -38,12 +48,12 @@ There is a phone app and a Windows app. The current version is **1.1**.
 
 ## Phone
 
-Download **Spectrogram.apk** from [Releases](https://github.com/smouky577/audio-spectrogram/releases/tag/v1.1) and install it. Allow installation from this file if Android asks.
+Download **Spectrogram.apk** from [Releases](https://github.com/smouky577/audio-spectrogram/releases/tag/v1.2) and install it. Allow installation from this file if Android asks.
 
 The phone source is in the `android` folder. Recordings, sounds made from pictures, and screen pictures are saved in `Documents/Spectrogram` on the phone.
 
 ## Windows
 
-Open the project folder and double-click `start.bat`. It starts a local address and opens the browser. Python is required.
+Open the project folder and double-click `Audio spectrogram.bat`. It starts a local address and opens the browser. Python is required.
 
 The app files are in the `www` folder.
